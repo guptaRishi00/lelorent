@@ -4,6 +4,12 @@ const { Schema } = mongoose;
 
 const propertySchema = new Schema(
   {
+    picture: [
+      {
+        type: String,
+        required: true,
+      },
+    ],
     title: {
       type: String,
       required: [true, "Property title is required"],

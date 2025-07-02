@@ -1,9 +1,12 @@
 import express from "express";
 import {
   createProperty,
+  deleteProperty,
   getProperties,
+  updateProperty,
 } from "../controllers/property.controller.js";
 import { requireAuth, clerkClient, getAuth } from "@clerk/express";
+import { upload } from "../middleware/multer.middleware.js";
 
 const router = express.Router();
 
@@ -28,6 +31,23 @@ const requireAdmin = async (req, res, next) => {
 
 router.get("/", getProperties);
 
-router.post("/", requireAuth(), requireAdmin, createProperty);
+router.post(
+  "/",
+  requireAuth(),
+  requireAdmin,
+  upload.array("pictures", 10),
+  createProperty
+);
+
+router.patch(
+  "/:id",
+  requireAuth(),
+  requireAdmin,
+  upload.array("pictures", 10),
+  updateProperty
+);
+router.delete("/:id", requireAuth(), requireAdmin, deleteProperty);
 
 export default router;
+// requireAuth(),
+//   requireAdmin,

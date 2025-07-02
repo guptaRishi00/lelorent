@@ -11,6 +11,11 @@ router.use(clerkMiddleware());
 
 router.post("/sync", requireAuth(), syncClerkUser);
 
-router.post("/set-role-premium", requireAuth(), setRoleAndPremium);
+router.post(
+  "/set-role-premium",
+  requireAuth(),
+
+  setRoleAndPremium
+);
 
 export default router;
