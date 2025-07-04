@@ -2,6 +2,7 @@ import express from "express";
 import {
   syncClerkUser,
   setRoleAndPremium,
+  setDefaultRole,
 } from "../controllers/user.controller.js";
 import { clerkMiddleware, requireAuth } from "@clerk/express";
 
@@ -16,6 +17,12 @@ router.post(
   requireAuth(),
 
   setRoleAndPremium
+);
+
+router.post(
+  "/set-default-role",
+  requireAuth(),
+  setDefaultRole
 );
 
 export default router;

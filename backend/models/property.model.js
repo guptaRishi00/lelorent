@@ -118,13 +118,47 @@ const propertySchema = new Schema(
       },
     ],
 
+    contactDetails: {
+      phone: {
+        type: String,
+        trim: true,
+        default: "",
+      },
+      email: {
+        type: String,
+        trim: true,
+        lowercase: true,
+        default: "",
+      },
+      alternativeContact: {
+        type: String,
+        trim: true,
+        default: "",
+      },
+      preferredContactMethod: {
+        type: String,
+        enum: ["phone", "email", "alternative"],
+        default: "phone",
+      },
+      contactPerson: {
+        type: String,
+        trim: true,
+        default: "",
+      },
+      availableHours: {
+        type: String,
+        trim: true,
+        default: "9 AM - 6 PM",
+      },
+    },
+
     isPremium: {
       type: Boolean,
       default: false,
     },
     premiumFeatures: {
-      exactLocation: { type: Boolean, default: false },
-      ownerContact: { type: Boolean, default: false },
+      exactLocation: { type: String, default: "" },
+      ownerContact: { type: String, default: "" },
       directVisits: { type: Boolean, default: false },
     },
   },

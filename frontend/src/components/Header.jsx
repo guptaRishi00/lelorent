@@ -8,6 +8,7 @@ import {
   Menu,
   X,
   ShieldCheck,
+  Star,
 } from "lucide-react";
 import {
   SignedIn,
@@ -18,14 +19,14 @@ import {
   useClerk,
 } from "@clerk/clerk-react";
 import { useState } from "react";
-
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useUserSync } from "../hooks/useUserSync";
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user } = useUser();
   const { signOut } = useClerk();
+  const location = useLocation();
 
   useUserSync();
 
@@ -41,10 +42,10 @@ export default function Header() {
   const isAdmin = user?.publicMetadata?.role === "admin";
 
   const navigationItems = [
-    { icon: Home, label: "Feed", href: "#" },
-    { icon: User, label: "Profile", href: "#" },
-    { icon: Heart, label: "Favourites", href: "#" },
-    { icon: HelpCircle, label: "Support", href: "#" },
+    { icon: Home, label: "Feed", to: "/feed" },
+    { icon: User, label: "Profile", to: "/profile" },
+    { icon: Heart, label: "Favourites", to: "/favourites" },
+    { icon: HelpCircle, label: "Support", to: "/support" },
   ];
 
   const handleSignOut = async () => {
@@ -71,23 +72,23 @@ export default function Header() {
           <SignedIn>
             <nav className="hidden lg:flex items-center space-x-8 flex-1 justify-center">
               {navigationItems.map((item) => (
-                <a
+                <Link
                   key={item.label}
-                  href={item.href}
-                  className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors duration-200"
+                  to={item.to}
+                  className={`flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors duration-200 ${location.pathname.startsWith(item.to) ? "font-bold text-blue-600" : ""}`}
                 >
                   <item.icon className="w-4 h-4" />
                   <span className="text-sm font-medium">{item.label}</span>
-                </a>
+                </Link>
               ))}
               {isAdmin && (
-                <a
-                  href="/admin"
+                <Link
+                  to="/admin"
                   className="flex items-center space-x-2 text-sm text-blue-600 font-semibold hover:underline"
                 >
                   <ShieldCheck className="w-4 h-4" />
                   Admin Panel
-                </a>
+                </Link>
               )}
             </nav>
           </SignedIn>
@@ -104,7 +105,14 @@ export default function Header() {
 
             <SignedIn>
               <div className="hidden lg:flex items-center space-x-3">
-                {!isPremium && (
+                {isPremium ? (
+                  <Link to="/pricing-section">
+                  <div className="flex items-center space-x-2 px-3 py-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-lg text-sm font-medium shadow-md">
+                    <Crown className="w-4 h-4" />
+                    <span>Premium</span>
+                  </div>
+                  </Link>
+                ) : (
                   <Link
                     to="/pricing-section"
                     className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-lg text-sm font-medium hover:from-purple-600 hover:to-blue-600 shadow-md transition-all duration-200"
@@ -140,7 +148,7 @@ export default function Header() {
                 <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-medium">
                   {initials}
                 </div>
-                <div>
+                <div className="flex-1">
                   <p className="text-sm font-medium text-gray-900">
                     {fullName}
                   </p>
@@ -148,6 +156,12 @@ export default function Header() {
                     {user?.primaryEmailAddress?.emailAddress}
                   </p>
                 </div>
+                {isPremium && (
+                  <div className="flex items-center space-x-1 px-2 py-1 bg-gradient-to-r from-yellow-400 to-orange-500 text-white rounded-full text-xs font-medium">
+                    <Crown className="w-3 h-3" />
+                    <span>Premium</span>
+                  </div>
+                )}
               </div>
 
               {!isPremium && (
@@ -163,25 +177,25 @@ export default function Header() {
 
               <nav className="space-y-2">
                 {navigationItems.map((item) => (
-                  <a
+                  <Link
                     key={item.label}
-                    href={item.href}
-                    className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors duration-200"
+                    to={item.to}
+                    className={`flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors duration-200 ${location.pathname.startsWith(item.to) ? "font-bold text-blue-600" : ""}`}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     <item.icon className="w-5 h-5" />
                     <span className="font-medium">{item.label}</span>
-                  </a>
+                  </Link>
                 ))}
                 {isAdmin && (
-                  <a
-                    href="/admin"
+                  <Link
+                    to="/admin"
                     className="flex items-center space-x-3 px-4 py-3 text-blue-700 hover:bg-blue-50 rounded-lg font-medium transition"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     <ShieldCheck className="w-5 h-5" />
                     <span>Admin Panel</span>
-                  </a>
+                  </Link>
                 )}
               </nav>
 

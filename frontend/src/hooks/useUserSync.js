@@ -27,15 +27,13 @@ export const useUserSync = () => {
 
     const setRoleIfMissing = async () => {
       const role = user?.publicMetadata?.role;
-      if (!role && role !== "admin") {
+      if (!role) {
         try {
           const token = await getToken();
           await axios.post(
-            "http://localhost:4000/api/user/set-role-premium",
+            "http://localhost:4000/api/user/set-default-role",
             {
               userId,
-              role: "user",
-              isPremium: false,
             },
             {
               headers: {

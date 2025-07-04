@@ -27,6 +27,7 @@ const userSchema = new Schema(
     },
     isPremium: { type: Boolean, default: false },
     premiumPurchasedAt: { type: Date },
+    premiumExpiresAt: { type: Date },
   },
   {
     timestamps: true,

@@ -18,6 +18,7 @@ export const createProperty = async (req, res) => {
       transportFacilities,
       amenities,
       educationFacilities,
+      contactDetails,
       isPremium,
       premiumFeatures,
     } = req.body;
@@ -46,12 +47,14 @@ export const createProperty = async (req, res) => {
       parsedTransport,
       parsedAmenities,
       parsedEducation,
+      parsedContact,
       parsedPremium;
     try {
       parsedFloor = JSON.parse(floor);
       parsedTransport = JSON.parse(transportFacilities);
       parsedAmenities = JSON.parse(amenities);
       parsedEducation = JSON.parse(educationFacilities);
+      parsedContact = contactDetails ? JSON.parse(contactDetails) : {};
       parsedPremium = JSON.parse(premiumFeatures);
     } catch (err) {
       return res
@@ -75,6 +78,7 @@ export const createProperty = async (req, res) => {
       transportFacilities: parsedTransport,
       amenities: parsedAmenities,
       educationFacilities: parsedEducation,
+      contactDetails: parsedContact,
       isPremium,
       premiumFeatures: parsedPremium,
     });
@@ -109,6 +113,7 @@ export const updateProperty = async (req, res) => {
       transportFacilities,
       amenities,
       educationFacilities,
+      contactDetails,
       isPremium,
       premiumFeatures,
       existingImages,
@@ -165,6 +170,9 @@ export const updateProperty = async (req, res) => {
         ...(amenities && { amenities: parseIfString(amenities) }),
         ...(educationFacilities && {
           educationFacilities: parseIfString(educationFacilities),
+        }),
+        ...(contactDetails && {
+          contactDetails: parseIfString(contactDetails),
         }),
         ...(typeof isPremium !== "undefined" && { isPremium }),
         ...(premiumFeatures && {

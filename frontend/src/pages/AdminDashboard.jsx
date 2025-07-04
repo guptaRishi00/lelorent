@@ -8,11 +8,16 @@ import {
   Building,
   MapPin,
   Calendar,
-
+  Info,
 } from "lucide-react";
 import { Toaster, toast } from "react-hot-toast";
 
-import { usePropertyUpload, updateProperty, deleteProperty, getProperties } from "../hooks/api";
+import {
+  usePropertyUpload,
+  updateProperty,
+  deleteProperty,
+  getProperties,
+} from "../hooks/api";
 import { useAuth } from "@clerk/clerk-react";
 
 const AdminDashboard = () => {
@@ -45,10 +50,18 @@ const AdminDashboard = () => {
     transportFacilities: [{ type: "MetroStation", distance: "0" }],
     amenities: [{ type: "Grocery", distance: "0" }],
     educationFacilities: [{ type: "School", distance: "0" }],
+    contactDetails: {
+      phone: "",
+      email: "",
+      alternativeContact: "",
+      preferredContactMethod: "phone",
+      contactPerson: "",
+      availableHours: "9 AM - 6 PM",
+    },
     isPremium: false,
     premiumFeatures: {
-      exactLocation: false,
-      ownerContact: false,
+      exactLocation: "",
+      ownerContact: "",
       directVisits: false,
     },
     images: [],
@@ -76,6 +89,23 @@ const AdminDashboard = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
+    // Premium validation
+    if (propertyForm.isPremium) {
+      if (!propertyForm.premiumFeatures.exactLocation.trim()) {
+        toast.error(
+          "Exact property location is required for premium properties."
+        );
+        setIsSubmitting(false);
+        return;
+      }
+      if (!propertyForm.premiumFeatures.ownerContact.trim()) {
+        toast.error(
+          "Owner contact details are required for premium properties."
+        );
+        setIsSubmitting(false);
+        return;
+      }
+    }
     const token = await getToken();
     const formData = {
       ...propertyForm,
@@ -139,9 +169,14 @@ const AdminDashboard = () => {
 
   const handleDrop = (e) => {
     e.preventDefault();
-    const files = Array.from(e.dataTransfer.files).filter((file) => file.type.startsWith("image/"));
+    const files = Array.from(e.dataTransfer.files).filter((file) =>
+      file.type.startsWith("image/")
+    );
     if (files.length === 0) return;
-    const totalImages = (propertyForm.existingImages?.length || 0) + (propertyForm.images?.length || 0) + files.length;
+    const totalImages =
+      (propertyForm.existingImages?.length || 0) +
+      (propertyForm.images?.length || 0) +
+      files.length;
     if (totalImages > MAX_IMAGES) {
       toast.error(`You can only upload up to ${MAX_IMAGES} images.`);
       return;
@@ -158,17 +193,25 @@ const AdminDashboard = () => {
 
   const removeImage = (indexToRemove, type = "new") => {
     if (type === "existing") {
-      if (!window.confirm("Are you sure you want to remove this image? This cannot be undone.")) return;
+      if (
+        !window.confirm(
+          "Are you sure you want to remove this image? This cannot be undone."
+        )
+      )
+        return;
       setPropertyForm((prev) => ({
         ...prev,
-        existingImages: prev.existingImages.filter((_, index) => index !== indexToRemove),
+        existingImages: prev.existingImages.filter(
+          (_, index) => index !== indexToRemove
+        ),
       }));
     } else {
       setPropertyForm((prev) => ({
         ...prev,
-        images: prev.images && Array.isArray(prev.images)
-          ? prev.images.filter((_, index) => index !== indexToRemove)
-          : [],
+        images:
+          prev.images && Array.isArray(prev.images)
+            ? prev.images.filter((_, index) => index !== indexToRemove)
+            : [],
       }));
     }
   };
@@ -189,10 +232,18 @@ const AdminDashboard = () => {
       transportFacilities: [{ type: "MetroStation", distance: "0" }],
       amenities: [{ type: "Grocery", distance: "0" }],
       educationFacilities: [{ type: "School", distance: "0" }],
+      contactDetails: {
+        phone: "",
+        email: "",
+        alternativeContact: "",
+        preferredContactMethod: "phone",
+        contactPerson: "",
+        availableHours: "9 AM - 6 PM",
+      },
       isPremium: false,
       premiumFeatures: {
-        exactLocation: false,
-        ownerContact: false,
+        exactLocation: "",
+        ownerContact: "",
         directVisits: false,
       },
       images: [],
@@ -212,7 +263,9 @@ const AdminDashboard = () => {
         number: property.floor.number.toString(),
         total: property.floor.total.toString(),
       },
-      availableFrom: property.availableFrom ? property.availableFrom.slice(0, 10) : "",
+      availableFrom: property.availableFrom
+        ? property.availableFrom.slice(0, 10)
+        : "",
       transportFacilities: property.transportFacilities || [
         { type: "MetroStation", distance: "0" },
       ],
@@ -220,9 +273,17 @@ const AdminDashboard = () => {
       educationFacilities: property.educationFacilities || [
         { type: "School", distance: "0" },
       ],
+      contactDetails: property.contactDetails || {
+        phone: "",
+        email: "",
+        alternativeContact: "",
+        preferredContactMethod: "phone",
+        contactPerson: "",
+        availableHours: "9 AM - 6 PM",
+      },
       premiumFeatures: property.premiumFeatures || {
-        exactLocation: false,
-        ownerContact: false,
+        exactLocation: "",
+        ownerContact: "",
         directVisits: false,
       },
       images: [],
@@ -232,7 +293,9 @@ const AdminDashboard = () => {
   };
 
   const handleDelete = async (id) => {
-    const confirm = window.confirm("Are you sure you want to delete this property?");
+    const confirm = window.confirm(
+      "Are you sure you want to delete this property?"
+    );
     if (!confirm) return;
     const token = await getToken();
     try {
@@ -440,27 +503,28 @@ const AdminDashboard = () => {
             Filter: {filterType === "all" ? "All Types" : filterType}
           </span>
           <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200">
-            Sort: {
-              sortBy === "createdAt"
-                ? sortOrder === "desc"
-                  ? "Newest First"
-                  : "Oldest First"
-                : sortBy === "monthlyRent"
-                ? sortOrder === "desc"
-                  ? "Highest Rent"
-                  : "Lowest Rent"
-                : sortBy === "title"
-                ? sortOrder === "asc"
-                  ? "Name A-Z"
-                  : "Name Z-A"
-                : `${sortBy} (${sortOrder})`
-            }
+            Sort:{" "}
+            {sortBy === "createdAt"
+              ? sortOrder === "desc"
+                ? "Newest First"
+                : "Oldest First"
+              : sortBy === "monthlyRent"
+              ? sortOrder === "desc"
+                ? "Highest Rent"
+                : "Lowest Rent"
+              : sortBy === "title"
+              ? sortOrder === "asc"
+                ? "Name A-Z"
+                : "Name Z-A"
+              : `${sortBy} (${sortOrder})`}
           </span>
         </div>
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             {loading && (
-              <div className="text-center py-12 text-gray-500">Loading properties...</div>
+              <div className="text-center py-12 text-gray-500">
+                Loading properties...
+              </div>
             )}
             {error && (
               <div className="text-center py-12 text-red-500">{error}</div>
@@ -775,9 +839,14 @@ const AdminDashboard = () => {
                     onChange={(e) => {
                       if (e.target.files) {
                         const files = Array.from(e.target.files);
-                        const totalImages = (propertyForm.existingImages?.length || 0) + (propertyForm.images?.length || 0) + files.length;
+                        const totalImages =
+                          (propertyForm.existingImages?.length || 0) +
+                          (propertyForm.images?.length || 0) +
+                          files.length;
                         if (totalImages > MAX_IMAGES) {
-                          toast.error(`You can only upload up to ${MAX_IMAGES} images.`);
+                          toast.error(
+                            `You can only upload up to ${MAX_IMAGES} images.`
+                          );
                           return;
                         }
                         setPropertyForm((prev) => ({
@@ -815,28 +884,31 @@ const AdminDashboard = () => {
                 </div>
 
                 {/* Image Preview */}
-                {propertyForm.existingImages && propertyForm.existingImages.length > 0 && (
-                  <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {propertyForm.existingImages.map((url, index) => (
-                      <div key={index} className="relative group">
-                        <img
-                          src={url}
-                          alt={`Property existing ${index + 1}`}
-                          className="w-full h-24 object-cover rounded-lg border border-gray-200 cursor-pointer"
-                          onClick={() => setPreviewImage(url)}
-                        />
-                        <span className="absolute left-1 top-1 bg-blue-600 text-white text-xs px-2 py-0.5 rounded">Existing</span>
-                        <button
-                          type="button"
-                          onClick={() => removeImage(index, "existing")}
-                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                {propertyForm.existingImages &&
+                  propertyForm.existingImages.length > 0 && (
+                    <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {propertyForm.existingImages.map((url, index) => (
+                        <div key={index} className="relative group">
+                          <img
+                            src={url}
+                            alt={`Property existing ${index + 1}`}
+                            className="w-full h-24 object-cover rounded-lg border border-gray-200 cursor-pointer"
+                            onClick={() => setPreviewImage(url)}
+                          />
+                          <span className="absolute left-1 top-1 bg-blue-600 text-white text-xs px-2 py-0.5 rounded">
+                            Existing
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => removeImage(index, "existing")}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 {propertyForm.images && propertyForm.images.length > 0 && (
                   <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
                     {Array.from(propertyForm.images).map((file, index) => (
@@ -845,9 +917,13 @@ const AdminDashboard = () => {
                           src={URL.createObjectURL(file)}
                           alt={`Property new ${index + 1}`}
                           className="w-full h-24 object-cover rounded-lg border border-gray-200 cursor-pointer"
-                          onClick={() => setPreviewImage(URL.createObjectURL(file))}
+                          onClick={() =>
+                            setPreviewImage(URL.createObjectURL(file))
+                          }
                         />
-                        <span className="absolute left-1 top-1 bg-green-600 text-white text-xs px-2 py-0.5 rounded">New</span>
+                        <span className="absolute left-1 top-1 bg-green-600 text-white text-xs px-2 py-0.5 rounded">
+                          New
+                        </span>
                         <button
                           type="button"
                           onClick={() => removeImage(index, "new")}
@@ -1121,6 +1197,104 @@ const AdminDashboard = () => {
                 </div>
               </div>
 
+              {/* Contact Details */}
+              <div className="border-t border-gray-200 pt-6">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Contact Details</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Contact Person
+                    </label>
+                    <input
+                      type="text"
+                      value={propertyForm.contactDetails.contactPerson}
+                      onChange={(e) =>
+                        handleInputChange("contactDetails.contactPerson", e.target.value)
+                      }
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      placeholder="Enter contact person name"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Phone Number
+                    </label>
+                    <input
+                      type="tel"
+                      value={propertyForm.contactDetails.phone}
+                      onChange={(e) =>
+                        handleInputChange("contactDetails.phone", e.target.value)
+                      }
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      placeholder="Enter phone number"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Email Address
+                    </label>
+                    <input
+                      type="email"
+                      value={propertyForm.contactDetails.email}
+                      onChange={(e) =>
+                        handleInputChange("contactDetails.email", e.target.value)
+                      }
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      placeholder="Enter email address"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Alternative Contact
+                    </label>
+                    <input
+                      type="text"
+                      value={propertyForm.contactDetails.alternativeContact}
+                      onChange={(e) =>
+                        handleInputChange("contactDetails.alternativeContact", e.target.value)
+                      }
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      placeholder="WhatsApp, Telegram, etc."
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Preferred Contact Method
+                    </label>
+                    <select
+                      value={propertyForm.contactDetails.preferredContactMethod}
+                      onChange={(e) =>
+                        handleInputChange("contactDetails.preferredContactMethod", e.target.value)
+                      }
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    >
+                      <option value="phone">Phone</option>
+                      <option value="email">Email</option>
+                      <option value="alternative">Alternative</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Available Hours
+                    </label>
+                    <input
+                      type="text"
+                      value={propertyForm.contactDetails.availableHours}
+                      onChange={(e) =>
+                        handleInputChange("contactDetails.availableHours", e.target.value)
+                      }
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      placeholder="e.g., 9 AM - 6 PM"
+                    />
+                  </div>
+                </div>
+              </div>
+
               {/* Premium Settings */}
               <div className="border-t border-gray-200 pt-6">
                 <div className="flex items-center space-x-3 mb-4">
@@ -1143,48 +1317,56 @@ const AdminDashboard = () => {
 
                 {propertyForm.isPremium && (
                   <div className="ml-7 space-y-3">
-                    <div className="flex items-center space-x-3">
+                    <div className="flex flex-col space-y-1">
+                      <label
+                        htmlFor="exactLocation"
+                        className="text-sm text-gray-700 flex items-center gap-1"
+                      >
+                        Exact Property Location
+                        <span title="Enter the full address or location details for this property. This will be visible only to premium users and admins.">
+                          <Info className="w-4 h-4 text-gray-400 inline" />
+                        </span>
+                      </label>
                       <input
-                        type="checkbox"
+                        type="text"
                         id="exactLocation"
-                        checked={propertyForm.premiumFeatures.exactLocation}
+                        value={propertyForm.premiumFeatures.exactLocation}
                         onChange={(e) =>
                           handleInputChange(
                             "premiumFeatures.exactLocation",
-                            e.target.checked
+                            e.target.value
                           )
                         }
-                        className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="Enter address or location details"
+                        required={propertyForm.isPremium}
                       />
-                      <label
-                        htmlFor="exactLocation"
-                        className="text-sm text-gray-700"
-                      >
-                        Show exact location
-                      </label>
                     </div>
-
-                    <div className="flex items-center space-x-3">
+                    <div className="flex flex-col space-y-1">
+                      <label
+                        htmlFor="ownerContact"
+                        className="text-sm text-gray-700 flex items-center gap-1"
+                      >
+                        Owner Contact Details
+                        <span title="Enter the owner's phone, email, or other contact info. This will be visible only to premium users and admins.">
+                          <Info className="w-4 h-4 text-gray-400 inline" />
+                        </span>
+                      </label>
                       <input
-                        type="checkbox"
+                        type="text"
                         id="ownerContact"
-                        checked={propertyForm.premiumFeatures.ownerContact}
+                        value={propertyForm.premiumFeatures.ownerContact}
                         onChange={(e) =>
                           handleInputChange(
                             "premiumFeatures.ownerContact",
-                            e.target.checked
+                            e.target.value
                           )
                         }
-                        className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="Enter phone, email, etc."
+                        required={propertyForm.isPremium}
                       />
-                      <label
-                        htmlFor="ownerContact"
-                        className="text-sm text-gray-700"
-                      >
-                        Direct owner contact
-                      </label>
                     </div>
-
                     <div className="flex items-center space-x-3">
                       <input
                         type="checkbox"
@@ -1202,7 +1384,7 @@ const AdminDashboard = () => {
                         htmlFor="directVisits"
                         className="text-sm text-gray-700"
                       >
-                        Allow direct visits
+                        Allow direct property visits
                       </label>
                     </div>
                   </div>
@@ -1227,7 +1409,13 @@ const AdminDashboard = () => {
                   disabled={isSubmitting}
                   className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
                 >
-                  {isSubmitting ? (editingProperty ? "Updating..." : "Adding...") : (editingProperty ? "Update Property" : "Add Property")}
+                  {isSubmitting
+                    ? editingProperty
+                      ? "Updating..."
+                      : "Adding..."
+                    : editingProperty
+                    ? "Update Property"
+                    : "Add Property"}
                 </button>
               </div>
             </form>
@@ -1236,8 +1424,15 @@ const AdminDashboard = () => {
       )}
 
       {previewImage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80" onClick={() => setPreviewImage(null)}>
-          <img src={previewImage} alt="Preview" className="max-h-[80vh] max-w-[90vw] rounded-lg shadow-lg border-4 border-white" />
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80"
+          onClick={() => setPreviewImage(null)}
+        >
+          <img
+            src={previewImage}
+            alt="Preview"
+            className="max-h-[80vh] max-w-[90vw] rounded-lg shadow-lg border-4 border-white"
+          />
         </div>
       )}
     </div>

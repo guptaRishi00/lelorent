@@ -4,17 +4,76 @@ import { getAuth } from "@clerk/express";
 import { clerkClient } from "@clerk/express";
 import { verifyWebhook } from "@clerk/express/webhooks";
 
-export const setRoleAndPremium = async (req, res) => {
-  const { userId, role, isPremium } = req.body;
-  if (!userId) return res.status(400).json({ error: "Missing userId" });
+const getExpiryDate = (planType) => {
+  const now = new Date();
+  if (planType === "monthly") now.setMonth(now.getMonth() + 1);
+  else if (planType === "quarterly") now.setMonth(now.getMonth() + 3);
+  else if (planType === "yearly") now.setFullYear(now.getFullYear() + 1);
+  return now;
+};
 
+export const setRoleAndPremium = async (req, res) => {
+  const { userId, planType } = req.body;
+  const clerkUser = await clerkClient.users.getUser(userId);
+
+  const role = clerkUser.publicMetadata?.role || "user";
+  const premiumExpiresAt = getExpiryDate(planType);
+
+  await clerkClient.users.updateUserMetadata(userId, {
+    publicMetadata: {
+      ...clerkUser.publicMetadata,
+      isPremium: true,
+      premiumExpiresAt,
+    },
+  });
+
+  await userModel.findOneAndUpdate(
+    { clerkId: userId },
+    {
+      role,
+      isPremium: true,
+      premiumPurchasedAt: new Date(),
+      premiumExpiresAt,
+      updatedAt: new Date(),
+    },
+    { new: true }
+  );
+
+  res.json({ success: true });
+};
+
+export const setDefaultRole = async (req, res) => {
+  const { userId } = req.body;
+  
   try {
-    const updatedUser = await clerkClient.users.updateUserMetadata(userId, {
-      publicMetadata: { role, isPremium },
-    });
-    res.json({ success: true, publicMetadata: updatedUser.publicMetadata });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    const clerkUser = await clerkClient.users.getUser(userId);
+    
+    // Only set default role if user doesn't have one
+    if (!clerkUser.publicMetadata?.role) {
+      await clerkClient.users.updateUserMetadata(userId, {
+        publicMetadata: {
+          ...clerkUser.publicMetadata,
+          role: "user",
+          isPremium: false, // Ensure new users are not premium by default
+        },
+      });
+
+      // Also update the database
+      await userModel.findOneAndUpdate(
+        { clerkId: userId },
+        {
+          role: "user",
+          isPremium: false,
+          updatedAt: new Date(),
+        },
+        { new: true }
+      );
+    }
+
+    res.json({ success: true, message: "Default role set" });
+  } catch (error) {
+    console.error("Error setting default role:", error);
+    res.status(500).json({ message: "Failed to set default role" });
   }
 };
 

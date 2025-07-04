@@ -37,6 +37,10 @@ export const usePropertyUpload = () => {
       JSON.stringify(propertyForm.educationFacilities)
     );
     formData.append(
+      "contactDetails",
+      JSON.stringify(propertyForm.contactDetails)
+    );
+    formData.append(
       "premiumFeatures",
       JSON.stringify(propertyForm.premiumFeatures)
     );

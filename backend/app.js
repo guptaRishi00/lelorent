@@ -7,6 +7,7 @@ dotenv.config();
 
 import userRoute from "./routes/user.routes.js";
 import propertyRoute from "./routes/property.routes.js";
+import paymentRoutes from "./routes/payment.routes.js";
 import connectToDb from "./db/db.js";
 
 connectToDb();
@@ -20,5 +21,6 @@ app.use(cookieParser());
 
 app.use("/api/user", userRoute);
 app.use("/api/property", propertyRoute);
+app.use("/api/payment", paymentRoutes);
 
 export default app;
